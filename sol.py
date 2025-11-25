@@ -1,6 +1,5 @@
 import numpy as np
 
-# ---------------------- DATA LOADING ----------------------
 
 def load_lidar_file(filename):
     """Load polar coordinate data file and convert to Cartesian."""
@@ -11,7 +10,6 @@ def load_lidar_file(filename):
     y = radii * np.sin(angles)
     return np.column_stack((x, y))
 
-# ---------------------- PARAMETERS ----------------------
 
 T_LINE = 0.02
 T_CIRCLE = 0.03
@@ -23,11 +21,10 @@ MIN_INLIERS_CIRCLE = 8
 MIN_LINE_LENGTH = 0.4
 R_MIN, R_MAX = 0.2, 0.5
 
-LINE_SAMPLE = 8     # instead of 2 → more stable, less noisy
+LINE_SAMPLE = 8     
 CIRCLE_SAMPLE = 3
 
 
-# ---------------------- FITTING MODELS ----------------------
 
 def fit_line_svd(points):
     """Fit line normal vector using SVD."""
@@ -65,7 +62,6 @@ def fit_circle(points):
     return np.array([cx, cy]), R
 
 
-# ---------------------- RANSAC LINE ----------------------
 
 def ransac_line(points):
     best_inliers = []
@@ -100,7 +96,6 @@ def ransac_line(points):
     return {'type': 'line', 'normal': n, 'c': c, 'length': length}, best_inliers
 
 
-# ---------------------- RANSAC CIRCLE ----------------------
 
 def ransac_circle(points):
     best_inliers = []
@@ -146,7 +141,6 @@ def ransac_circle(points):
     return {'type': 'circle', 'center': center, 'radius': R}, best_inliers
 
 
-# ---------------------- SEQUENTIAL RANSAC ----------------------
 
 def sequential_ransac(points):
     """Sequential RANSAC that returns circles, lines, and remaining points."""
@@ -160,7 +154,6 @@ def sequential_ransac(points):
         line_model, line_inl = ransac_line(cur)
         circle_model, circ_inl = ransac_circle(cur)
 
-        # Choose best model
         candidates = []
         if line_model: candidates.append((line_model, line_inl, len(line_inl)))
         if circle_model: candidates.append((circle_model, circ_inl, len(circ_inl)))
@@ -171,11 +164,9 @@ def sequential_ransac(points):
         best = max(candidates, key=lambda x: x[2])
         model, inlier_idx, _ = best
 
-        # Map to original indices
         original_inliers = remaining[inlier_idx]
         inlier_points = points[original_inliers]
 
-        # Format output based on model type
         if model['type'] == 'circle':
             center = model['center']
             radius = model['radius']

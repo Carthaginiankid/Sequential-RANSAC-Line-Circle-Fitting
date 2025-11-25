@@ -4,58 +4,41 @@ from matplotlib.patches import Circle
 from sol import load_lidar_file, sequential_ransac
 
 def visualize_results(filename, circles, lines, remaining_points, save_path=None):
-    """Create an elegant visualization of RANSAC results.
     
-    Args:
-        filename: Name of the input file (for title)
-        circles: List of (circle_params, inliers) tuples, where circle_params = (x0, y0, r)
-        lines: List of (line_params, inliers) tuples, where line_params = (a, b, c)
-        remaining_points: Array of remaining points
-        save_path: Optional path to save the figure
-    """
     fig, ax = plt.subplots(1, 1, figsize=(14, 14))
     
-    # Set up the plot with a clean style
     ax.set_aspect('equal')
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
     ax.set_facecolor('#f8f9fa')
     
-    # Plot remaining points first (so they appear in the background)
     if len(remaining_points) > 0:
         ax.scatter(remaining_points[:, 0], remaining_points[:, 1], 
                   c='lightgray', s=15, alpha=0.6, edgecolors='none', 
                   label=f'Remaining points ({len(remaining_points)})', zorder=1)
     
-    # Plot circle inliers and draw circle arcs
     for circle, inliers in circles:
         x0, y0, r = circle
         
-        # Plot inlier points
         ax.scatter(inliers[:, 0], inliers[:, 1], 
                   c='red', s=20, alpha=0.7, edgecolors='darkred', linewidths=0.5,
                   zorder=3)
         
-        # Draw the circle
         circle_patch = Circle((x0, y0), r, fill=False, 
                              edgecolor='red', linewidth=2, linestyle='-',
                              alpha=0.8, zorder=2)
         ax.add_patch(circle_patch)
         
-        # Add center point
         ax.plot(x0, y0, 'ro', markersize=6, markeredgecolor='darkred', 
                markeredgewidth=1, zorder=4)
     
-    # Plot line inliers and draw line segments
     for line, inliers in lines:
         a, b, c = line
         
-        # Plot inlier points
         ax.scatter(inliers[:, 0], inliers[:, 1], 
                   c='blue', s=20, alpha=0.7, edgecolors='darkblue', linewidths=0.5,
                   zorder=3)
         
-        # Compute line segment endpoints from inliers
-        # Project points onto line direction to find extent
+        
         direction = np.array([-b, a])  # Direction vector perpendicular to normal
         direction = direction / np.linalg.norm(direction)
         
@@ -67,15 +50,12 @@ def visualize_results(filename, circles, lines, remaining_points, save_path=None
         min_proj = np.min(projections)
         max_proj = np.max(projections)
         
-        # Calculate endpoints
         p1 = centroid + min_proj * direction
         p2 = centroid + max_proj * direction
         
-        # Draw the line segment
         ax.plot([p1[0], p2[0]], [p1[1], p2[1]], 
                color='blue', linewidth=2, alpha=0.8, zorder=2)
     
-    # Set labels and title
     ax.set_xlabel('X (meters)', fontsize=12, fontweight='bold')
     ax.set_ylabel('Y (meters)', fontsize=12, fontweight='bold')
     ax.set_title(f'RANSAC Results: {filename}\n'
@@ -83,7 +63,6 @@ def visualize_results(filename, circles, lines, remaining_points, save_path=None
                 f'Remaining: {len(remaining_points)}', 
                 fontsize=14, fontweight='bold', pad=20)
     
-    # Create custom legend
     from matplotlib.lines import Line2D
     legend_elements = [
         Line2D([0], [0], marker='o', color='w', markerfacecolor='red', 
@@ -100,7 +79,6 @@ def visualize_results(filename, circles, lines, remaining_points, save_path=None
     ax.legend(handles=legend_elements, loc='upper right', 
              fontsize=10, framealpha=0.9, fancybox=True, shadow=True)
     
-    # Add statistics text box
     stats_text = f'Statistics:\n'
     stats_text += f'Total circles: {len(circles)}\n'
     stats_text += f'Total lines: {len(lines)}\n'
@@ -135,21 +113,18 @@ def visualize_results(filename, circles, lines, remaining_points, save_path=None
 
 
 def visualize_all_files(file_numbers=[7, 17, 27], show_plots=True, save_plots=True):
-    """Visualize all processed files."""
     figs = []
     
     for num in file_numbers:
         filename = f"{num}"
         print(f"\nVisualizing {filename}...")
         
-        # Load and process
         points = load_lidar_file(filename)
         circles, lines, remaining = sequential_ransac(points)
         
         print(f"  Found {len(circles)} circles and {len(lines)} lines")
         print(f"  Remaining points: {len(remaining)}")
         
-        # Create visualization
         save_path = f"{num}_visualization.png" if save_plots else None
         fig, ax = visualize_results(filename, circles, lines, remaining, save_path)
         figs.append(fig)
@@ -164,6 +139,5 @@ def visualize_all_files(file_numbers=[7, 17, 27], show_plots=True, save_plots=Tr
 
 
 if __name__ == "__main__":
-    # Visualize all files
     visualize_all_files(show_plots=True, save_plots=True)
 

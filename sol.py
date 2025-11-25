@@ -1,5 +1,16 @@
 import numpy as np
 
+# ---------------------- DATA LOADING ----------------------
+
+def load_lidar_file(filename):
+    """Load polar coordinate data file and convert to Cartesian."""
+    data = np.loadtxt(filename)
+    angles = np.deg2rad(data[:, 0])
+    radii = data[:, 1] / 1000.0  # mm → meters
+    x = radii * np.cos(angles)
+    y = radii * np.sin(angles)
+    return np.column_stack((x, y))
+
 # ---------------------- PARAMETERS ----------------------
 
 T_LINE = 0.02
@@ -52,15 +63,6 @@ def fit_circle(points):
         return None, None
     R = np.sqrt(cx*cx + cy*cy + c)
     return np.array([cx, cy]), R
-
-
-# ---------------------- DISTANCES ----------------------
-
-def dist_line(p, n, c):
-    return abs(n[0]*p[0] + n[1]*p[1] + c)
-
-def dist_circle(p, center, R):
-    return abs(np.linalg.norm(p - center) - R)
 
 
 # ---------------------- RANSAC LINE ----------------------
@@ -147,8 +149,10 @@ def ransac_circle(points):
 # ---------------------- SEQUENTIAL RANSAC ----------------------
 
 def sequential_ransac(points):
+    """Sequential RANSAC that returns circles, lines, and remaining points."""
     remaining = np.arange(len(points))
-    models = []
+    circles = []
+    lines = []
 
     while len(remaining) > MIN_INLIERS_CIRCLE:
         cur = points[remaining]
@@ -168,9 +172,22 @@ def sequential_ransac(points):
         model, inlier_idx, _ = best
 
         # Map to original indices
-        model['indices'] = remaining[inlier_idx]
-        models.append(model)
+        original_inliers = remaining[inlier_idx]
+        inlier_points = points[original_inliers]
+
+        # Format output based on model type
+        if model['type'] == 'circle':
+            center = model['center']
+            radius = model['radius']
+            circle_params = (center[0], center[1], radius)
+            circles.append((circle_params, inlier_points))
+        elif model['type'] == 'line':
+            normal = model['normal']
+            c = model['c']
+            line_params = (normal[0], normal[1], c)
+            lines.append((line_params, inlier_points))
 
         remaining = np.delete(remaining, inlier_idx)
 
-    return models, remaining
+    remaining_points = points[remaining] if len(remaining) > 0 else np.array([]).reshape(0, 2)
+    return circles, lines, remaining_points

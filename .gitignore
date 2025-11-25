@@ -25,7 +25,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Data files (uncomment if you don't want to track these)
-# *.ply
-# *.pcd
+# Data files
+*.ply
+*.pcd
+
+# Output files
+*_visualization.png
+*_output.ply
 

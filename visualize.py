@@ -1,9 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.patches import Circle, Arc
-import matplotlib.colors as mcolors
-from load import load_lidar_file, sequential_ransac
+from matplotlib.patches import Circle
+from sol import load_lidar_file, sequential_ransac
 
 def visualize_results(filename, circles, lines, remaining_points, save_path=None):
     """Create an elegant visualization of RANSAC results.
@@ -29,7 +27,7 @@ def visualize_results(filename, circles, lines, remaining_points, save_path=None
                   label=f'Remaining points ({len(remaining_points)})', zorder=1)
     
     # Plot circle inliers and draw circle arcs
-    for i, (circle, inliers) in enumerate(circles):
+    for circle, inliers in circles:
         x0, y0, r = circle
         
         # Plot inlier points
@@ -48,7 +46,7 @@ def visualize_results(filename, circles, lines, remaining_points, save_path=None
                markeredgewidth=1, zorder=4)
     
     # Plot line inliers and draw line segments
-    for i, (line, inliers) in enumerate(lines):
+    for line, inliers in lines:
         a, b, c = line
         
         # Plot inlier points
